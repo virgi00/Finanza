@@ -5,6 +5,7 @@ deploy-ec2.sh
 *.tar.gz
 *.pem
 setup-ec2.sh
+.DS_Store
 
 # backend
 backend/.vscode/
