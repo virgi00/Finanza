@@ -1,0 +1,59 @@
+services:
+  # Database MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: finanza_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: finanzanewsdb
+      MYSQL_USER: finanza_user
+      MYSQL_PASSWORD: t4tt01987
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - finanza_network
+
+  # Backend Spring Boot
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: finanza_backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/finanzanewsdb
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: rootpassword
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-AIzaSyA7v-puCeMbGF5Ejfa8dKZhylSpkd254T8}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+    networks:
+      - finanza_network
+
+  # Frontend React
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: finanza_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - finanza_network
+
+networks:
+  finanza_network:
+    driver: bridge
+
+volumes:
+  mysql_data:

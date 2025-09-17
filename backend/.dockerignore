@@ -1,0 +1,12 @@
+# Dockerignore per Backend Java
+target/
+.mvn/
+mvnw
+mvnw.cmd
+*.iml
+.idea/
+.vscode/
+.DS_Store
+*.log
+.git/
+README.md
