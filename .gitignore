@@ -1,10 +1,7 @@
 .vscode/
 .env
-check-status.sh
-deploy-ec2.sh
 *.tar.gz
 *.pem
-setup-ec2.sh
 .DS_Store
 
 # backend
