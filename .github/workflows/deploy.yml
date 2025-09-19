@@ -1,0 +1,88 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/finanza-key.pem
+        chmod 600 ~/.ssh/finanza-key.pem
+        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+    
+    - name: Create deployment package
+      run: |
+        tar -czf finanza-app-deploy.tar.gz \
+          backend/ \
+          frontend/ \
+          mysql/ \
+          docker-compose-ec2.yml \
+          deploy-scripts/
+    
+    - name: Copy files to EC2
+      run: |
+        scp -i ~/.ssh/finanza-key.pem \
+          finanza-app-deploy.tar.gz \
+          ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/
+    
+    - name: Deploy on EC2
+      run: |
+        ssh -i ~/.ssh/finanza-key.pem ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+          # Stop existing containers
+          cd /home/ubuntu/finanza-app
+          docker-compose -f docker-compose-ec2.yml down || true
+          
+          # Backup current version
+          sudo rm -rf /home/ubuntu/finanza-app-backup || true
+          sudo mv /home/ubuntu/finanza-app /home/ubuntu/finanza-app-backup || true
+          
+          # Extract new version
+          cd /home/ubuntu
+          tar -xzf finanza-app-deploy.tar.gz
+          mkdir finanza-app-new
+          mv backend frontend mysql docker-compose-ec2.yml deploy-scripts finanza-app-new/
+          mv finanza-app-new finanza-app
+          
+          # Start new containers
+          cd /home/ubuntu/finanza-app
+          docker-compose -f docker-compose-ec2.yml up -d --build
+          
+          # Wait for containers to be ready
+          sleep 30
+          
+          # Health check
+          if curl -f http://localhost:8080/articles > /dev/null 2>&1; then
+            echo "✅ Deployment successful - Backend is responding"
+            # Cleanup old backup
+            sudo rm -rf /home/ubuntu/finanza-app-backup || true
+          else
+            echo "❌ Deployment failed - Rolling back"
+            cd /home/ubuntu
+            docker-compose -f finanza-app/docker-compose-ec2.yml down || true
+            sudo rm -rf finanza-app || true
+            sudo mv finanza-app-backup finanza-app || true
+            cd finanza-app
+            docker-compose -f docker-compose-ec2.yml up -d
+            exit 1
+          fi
+          
+          # Cleanup deployment file
+          rm -f /home/ubuntu/finanza-app-deploy.tar.gz
+        EOF
+    
+    - name: Verify deployment
+      run: |
+        echo "🚀 Deployment completed!"
+        echo "Frontend: http://${{ secrets.EC2_HOST }}:3000"
+        echo "Backend: http://${{ secrets.EC2_HOST }}:8080"
