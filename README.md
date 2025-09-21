@@ -194,3 +194,4 @@ Per la produzione:
 4. Implementa backup del database
 # Updated Sun Sep 21 20:02:46 CEST 2025
 Deploy: Update EC2_HOST IP to match current instance
+Deploy: New Gemini API key from fresh Google account
