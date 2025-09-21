@@ -39,6 +39,14 @@ jobs:
     - name: Deploy on EC2
       run: |
         ssh -i ~/.ssh/finanza-key.pem ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+          # Create .env file from secrets
+          echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" > /home/ubuntu/finanza-app/.env
+          echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> /home/ubuntu/finanza-app/.env
+          echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> /home/ubuntu/finanza-app/.env
+          echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> /home/ubuntu/finanza-app/.env
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> /home/ubuntu/finanza-app/.env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> /home/ubuntu/finanza-app/.env
+
           # Stop existing containers
           cd /home/ubuntu/finanza-app
           docker-compose -f docker-compose-ec2.yml down || true
@@ -56,7 +64,7 @@ jobs:
           
           # Start new containers
           cd /home/ubuntu/finanza-app
-          docker-compose -f docker-compose-ec2.yml up -d --build
+          docker-compose -f docker-compose-ec2.yml --env-file .env up -d --build
           
           # Wait for containers to be ready
           sleep 30
@@ -73,7 +81,7 @@ jobs:
             sudo rm -rf finanza-app || true
             sudo mv finanza-app-backup finanza-app || true
             cd finanza-app
-            docker-compose -f docker-compose-ec2.yml up -d
+            docker-compose -f docker-compose-ec2.yml --env-file .env up -d
             exit 1
           fi
           

@@ -5,10 +5,10 @@ services:
     image: mysql:8.0
     container_name: finanza-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: finanzanewsdb
-      MYSQL_USER: finanza_user
-      MYSQL_PASSWORD: t4tt01987
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
@@ -24,11 +24,13 @@ services:
     build: ./backend
     container_name: finanza-backend
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/finanzanewsdb
-      SPRING_DATASOURCE_USERNAME: finanza_user
-      SPRING_DATASOURCE_PASSWORD: t4tt01987
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_PROFILES_ACTIVE: docker
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      JWT_SECRET: ${JWT_SECRET}
     ports:
       - "8080:8080"
     depends_on:
