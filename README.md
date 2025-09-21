@@ -196,3 +196,4 @@ Per la produzione:
 Deploy: Update EC2_HOST IP to match current instance
 Deploy: Force redeploy to ensure frontend update on EC2
 Force deploy: Ensure new Gemini API key is active on EC2
+Force deployment 1758481188
