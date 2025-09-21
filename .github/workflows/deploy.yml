@@ -39,22 +39,6 @@ jobs:
     - name: Deploy on EC2
       run: |
         ssh -i ~/.ssh/finanza-key.pem ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
-          # Create .env file from secrets
-          echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" > /home/ubuntu/finanza-app/.env
-          echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> /home/ubuntu/finanza-app/.env
-          echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> /home/ubuntu/finanza-app/.env
-          echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> /home/ubuntu/finanza-app/.env
-          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> /home/ubuntu/finanza-app/.env
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> /home/ubuntu/finanza-app/.env
-
-          # Stop existing containers
-          cd /home/ubuntu/finanza-app
-          docker-compose -f docker-compose-ec2.yml down || true
-          
-          # Backup current version
-          sudo rm -rf /home/ubuntu/finanza-app-backup || true
-          sudo mv /home/ubuntu/finanza-app /home/ubuntu/finanza-app-backup || true
-          
           # Extract new version
           cd /home/ubuntu
           tar -xzf finanza-app-deploy.tar.gz
@@ -62,8 +46,16 @@ jobs:
           mv backend frontend mysql docker-compose-ec2.yml deploy-scripts finanza-app-new/
           mv finanza-app-new finanza-app
           
-          # Start new containers
+          # Create .env file from secrets in the new app directory
           cd /home/ubuntu/finanza-app
+          echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" > .env
+          echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env
+          echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> .env
+          echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+          
+          # Start new containers
           docker-compose -f docker-compose-ec2.yml --env-file .env up -d --build
           
           # Wait for containers to be ready
