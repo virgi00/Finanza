@@ -51,7 +51,6 @@ public class Category {
         return getClass().hashCode();
     }
 
-    // toString
     @Override
     public String toString() {
         return "Category{" +
