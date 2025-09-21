@@ -192,3 +192,4 @@ Per la produzione:
 2. Considera l'uso di Docker Secrets per informazioni sensibili
 3. Configura un reverse proxy (nginx/traefik) se necessario
 4. Implementa backup del database
+# Updated Sun Sep 21 20:02:46 CEST 2025
